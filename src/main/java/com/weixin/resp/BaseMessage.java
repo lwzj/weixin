@@ -6,6 +6,8 @@ package com.weixin.resp;
  * @describe 推送消息的基类
  */
 public class BaseMessage {
+
+
     // 接收方帐号（收到的OpenID）
     private String ToUserName;
     // 开发者微信号

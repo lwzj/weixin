@@ -1,12 +1,12 @@
 package com.weixin.utils;
 
-import com.weixin.pojo.Constant;
-
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 public class SignUtil {
+    private static final String TOKEN = "weixin";
     /**
      * 验证签名
      *
@@ -17,22 +17,24 @@ public class SignUtil {
      */
     public static boolean checkSignature(String signature, String timestamp,
                                          String nonce) {
-        String[] arr = new String[] { Constant.TOKEN, timestamp, nonce };
+        String[] arr = new String[] { TOKEN, timestamp, nonce };
         // 将token、timestamp、nonce三个参数进行字典序排序
         Arrays.sort(arr);
         StringBuilder content = new StringBuilder();
         for (int i = 0; i < arr.length; i++) {
             content.append(arr[i]);
         }
-        MessageDigest md = null;
+        MessageDigest md;
         String tmpStr = null;
 
         try {
             md = MessageDigest.getInstance("SHA-1");
             // 将三个参数字符串拼接成一个字符串进行sha1加密
-            byte[] digest = md.digest(content.toString().getBytes());
+            byte[] digest = md.digest(content.toString().getBytes("UTF-8"));
             tmpStr = byteToStr(digest);
         } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
 

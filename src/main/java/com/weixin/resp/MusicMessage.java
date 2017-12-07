@@ -7,7 +7,7 @@ package com.weixin.resp;
  */
 public class MusicMessage extends BaseMessage {
     // 音乐
-    private Music Music;
+    private com.weixin.resp.Music Music;
 
     public com.weixin.resp.Music getMusic() {
         return Music;

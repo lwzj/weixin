@@ -6,11 +6,11 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="weixinhao" />
+        <module name="wxgzh" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="1.7">
-      <module name="weixinhao" target="1.5" />
+      <module name="wxgzh" target="1.5" />
     </bytecodeTargetLevel>
   </component>
 </project>

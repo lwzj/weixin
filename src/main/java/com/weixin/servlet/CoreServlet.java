@@ -2,6 +2,8 @@ package com.weixin.servlet;
 
 import com.weixin.service.CoreService;
 import com.weixin.utils.SignUtil;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -10,6 +12,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+@Controller
+@RequestMapping("/cs")
 public class CoreServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

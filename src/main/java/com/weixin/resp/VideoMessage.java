@@ -7,7 +7,7 @@ package com.weixin.resp;
  */
 public class VideoMessage extends BaseMessage {
     // 视频
-    private Video Video;
+    private com.weixin.resp.Video Video;
 
     public com.weixin.resp.Video getVideo() {
         return Video;
