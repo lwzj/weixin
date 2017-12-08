@@ -7,6 +7,7 @@ import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
 import com.thoughtworks.xstream.io.xml.XppDriver;
 import com.weixin.resp.*;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.dom4j.Document;
 import org.dom4j.Element;
@@ -15,10 +16,7 @@ import org.dom4j.io.SAXReader;
 import javax.servlet.http.HttpServletRequest;
 import java.io.InputStream;
 import java.io.Writer;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MessageUtil {
     // 请求消息类型：文本
@@ -84,7 +82,7 @@ public class MessageUtil {
         List<Element> elementList = root.elements();
         // 遍历所有子节点
         for (Element e : elementList
-             ) {
+                ) {
             map.put(e.getName(), e.getText());
         }
         inputStream.close();
@@ -94,10 +92,10 @@ public class MessageUtil {
     /**
      * 扩展xstream使其支持CDATA
      */
-    private static XStream xStream = new XStream(new XppDriver(){
+    private static XStream xStream = new XStream(new XppDriver() {
         @Override
         public HierarchicalStreamWriter createWriter(Writer out) {
-            return new PrettyPrintWriter(out){
+            return new PrettyPrintWriter(out) {
                 // 对所有xml节点的转换都增加CDATA标记
                 boolean cdata = true;
 
@@ -129,6 +127,7 @@ public class MessageUtil {
         xStream.alias("xml", textMessage.getClass());
         return xStream.toXML(textMessage);
     }
+
     /**
      * 文本消息对象转换成xml
      *
@@ -139,6 +138,7 @@ public class MessageUtil {
         xStream.alias("xml", imageMessage.getClass());
         return xStream.toXML(imageMessage);
     }
+
     /**
      * 文本消息对象转换成xml
      *
@@ -149,6 +149,7 @@ public class MessageUtil {
         xStream.alias("xml", voiceMessage.getClass());
         return xStream.toXML(voiceMessage);
     }
+
     /**
      * 文本消息对象转换成xml
      *
@@ -159,6 +160,7 @@ public class MessageUtil {
         xStream.alias("xml", videoMessage.getClass());
         return xStream.toXML(videoMessage);
     }
+
     /**
      * 文本消息对象转换成xml
      *
@@ -169,6 +171,7 @@ public class MessageUtil {
         xStream.alias("xml", musicMessage.getClass());
         return xStream.toXML(musicMessage);
     }
+
     /**
      * 文本消息对象转换成xml
      *
@@ -219,8 +222,92 @@ public class MessageUtil {
     }
 
     public static String initTulLing(String ToUserName, String FromUserName, String content) {
-        String url = "http://www.tuling123.com/openapi/api?key=a54e5d043dc840fe97a10d47b71615bd&info="+content;
-        JSONObject jsonObject = HttpClientUtil.doGetStr(url);
+        TulingUtil tulingUtil = new TulingUtil();
+        JSONObject params = new JSONObject();
+        params.put("key",tulingUtil.getKEY());
+        params.put("info",content);
+        JSONObject jsonObject = HttpClientUtil.doPostStr(tulingUtil.getURL(),params.toString());
+        int code = jsonObject.getInt("code");
+        String message = "";
+        switch (code) {
+            case 100000:
+                //文本类
+                message = tulingText(jsonObject,ToUserName,FromUserName);
+                break;
+            case 200000:
+                //链接类
+                message = tulingURL(jsonObject, ToUserName, FromUserName);
+                break;
+            case 302000:
+                //新闻类
+                message = tulingNews(jsonObject, ToUserName, FromUserName);
+                break;
+            case 308000:
+                //菜谱类
+                message = tulingCaiPu(jsonObject, ToUserName, FromUserName);
+                break;
+            default:
+                message = tulingText(jsonObject,ToUserName,FromUserName);
+
+        }
+        return message;
+
+    }
+
+    private static String tulingCaiPu(JSONObject jsonObject, String toUserName, String fromUserName) {
+        JSONArray list = jsonObject.getJSONArray("list");
+        List<Article> articles = new ArrayList<Article>();
+        for (int i = 0;i<4;i++) {
+            JSONObject object = (JSONObject) list.get(i);
+            Article article =new Article();
+            article.setDescription(object.getString("info"));
+            article.setPicUrl(object.getString("icon"));
+            article.setTitle(object.getString("name"));
+            article.setUrl(object.getString("detailurl"));
+            articles.add(article);
+        }
+        NewsMessage newsMessage = new NewsMessage();
+        newsMessage.setToUserName(toUserName);
+        newsMessage.setFromUserName(fromUserName);
+        newsMessage.setCreateTime(new Date().getTime());
+        newsMessage.setArticleCount(4);
+        newsMessage.setArticles(articles);
+        return messageToXml(newsMessage);
+    }
+
+    private static String tulingNews(JSONObject jsonObject, String toUserName, String fromUserName) {
+        JSONArray list = jsonObject.getJSONArray("list");
+        List<Article> articles = new ArrayList<Article>();
+        for (int i = 0;i<4;i++) {
+            JSONObject object = (JSONObject) list.get(i);
+            Article article =new Article();
+            article.setDescription(object.getString("source"));
+            article.setPicUrl(object.getString("icon"));
+            article.setTitle(object.getString("article"));
+            article.setUrl(object.getString("detailurl"));
+            articles.add(article);
+        }
+        NewsMessage newsMessage = new NewsMessage();
+        newsMessage.setToUserName(toUserName);
+        newsMessage.setFromUserName(fromUserName);
+        newsMessage.setCreateTime(new Date().getTime());
+        newsMessage.setArticleCount(4);
+        newsMessage.setArticles(articles);
+        return messageToXml(newsMessage);
+    }
+
+    private static String tulingURL(JSONObject jsonObject, String toUserName, String fromUserName) {
+        String res = jsonObject.getString("url");
+        TextMessage text = new TextMessage();
+        text.setFromUserName(toUserName);
+        text.setToUserName(fromUserName);
+        text.setMsgType(RESP_MESSAGE_TYPE_TEXT);
+        text.setCreateTime(new Date().getTime());
+        text.setContent(res);
+        return messageToXml(text);
+    }
+
+    public static String tulingText(JSONObject jsonObject, String ToUserName, String FromUserName){
         String res = jsonObject.getString("text");
         TextMessage text = new TextMessage();
         text.setFromUserName(ToUserName);

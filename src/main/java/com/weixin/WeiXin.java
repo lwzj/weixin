@@ -1,5 +1,6 @@
 package com.weixin;
 
+import com.weixin.baidu.aip.imageclassify.AipImageClassify;
 import com.weixin.pojo.Button;
 import com.weixin.pojo.ClickButton;
 import com.weixin.pojo.Menu;
@@ -20,6 +21,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 @Controller
@@ -75,28 +78,66 @@ public class WeiXin {
             if (MessageUtil.REQ_MESSAGE_TYPE_IMAGE.equals(MsgType)) {
                 String MediaId = map.get("MediaId");
                 String token = AuthUtil.getInstance().get_access_token().get("access_token");
-//                String url = AuthUtil.GET_FILE_URL.replace("ACCESS_TOKEN", token);
-//                url+="&media_id="+MediaId;
-                message = MessageUtil.initText(ToUserName, FromUserName, token);
-                // 初始化一个AipImageCensor
-//                AipImageClassify client = new AipImageClassify(APP_ID, API_KEY, SECRET_KEY);
-//
-//                // 可选：设置网络连接参数
-//                client.setConnectionTimeoutInMillis(2000);
-//                client.setSocketTimeoutInMillis(60000);
+                String url = AuthUtil.GET_FILE_URL.replace("ACCESS_TOKEN", token);
+                url+="&media_id="+MediaId;
+//                message = MessageUtil.initText(ToUserName, FromUserName, token);
+//                 初始化一个AipImageCensor
+                AipImageClassify client = new AipImageClassify(APP_ID, API_KEY, SECRET_KEY);
 
-//                org.json.JSONObject res = client.carDetect(path,new HashMap<String, String>());
-//                HashMap hashMap = (HashMap) res.toMap();
-//                ArrayList<HashMap> result = (ArrayList<HashMap>) hashMap.get("result");
-//                double i = 0;
-//                for (HashMap value: result
-//                     ) {
-//                    if(Double.parseDouble(value.get("score").toString())>i) {
-//                        i = Double.parseDouble(value.get("score").toString());
-//                        message = value.get("name").toString();
-//                        message = MessageUtil.initText(ToUserName, FromUserName, message);
-//                    }
-//                }
+                // 可选：设置网络连接参数
+                client.setConnectionTimeoutInMillis(2000);
+                client.setSocketTimeoutInMillis(60000);
+                //先判断这是不是一辆车
+                org.json.JSONObject res = client.carDetect(url,new HashMap<String, String>());
+                HashMap hashMap = (HashMap) res.toMap();
+                ArrayList<HashMap> result = (ArrayList<HashMap>) hashMap.get("result");
+                double i = 0;
+                for (HashMap value: result) {
+                    if(Double.parseDouble(value.get("score").toString())>i) {
+                        i = Double.parseDouble(value.get("score").toString());
+                        message = value.get("name").toString();
+                        message = MessageUtil.initText(ToUserName, FromUserName, message);
+                    }
+                }
+                if (i == 1) {//非汽车，检查是不是动物
+                    org.json.JSONObject res2 = client.animalDetect(url, new HashMap<String, String>());
+                    hashMap = (HashMap) res.toMap();
+                    result = (ArrayList<HashMap>) hashMap.get("result");
+                    i = 0;
+                    for (HashMap value: result) {
+                        if(Double.parseDouble(value.get("score").toString())>i) {
+                            i = Double.parseDouble(value.get("score").toString());
+                            message = value.get("name").toString();
+                            message = MessageUtil.initText(ToUserName, FromUserName, message);
+                        }
+                    }
+                }
+                if (i == 1) {//非动物，检查是不是植物
+                    org.json.JSONObject res2 = client.plantDetect(url, new HashMap<String, String>());
+                    hashMap = (HashMap) res2.toMap();
+                    result = (ArrayList<HashMap>) hashMap.get("result");
+                    i = 0;
+                    for (HashMap value: result) {
+                        if(Double.parseDouble(value.get("score").toString())>i) {
+                            i = Double.parseDouble(value.get("score").toString());
+                            message = value.get("name").toString();
+                            message = MessageUtil.initText(ToUserName, FromUserName, message);
+                        }
+                    }
+                }
+                if (i == 1) {//非植物，检查是不是动物
+                    org.json.JSONObject res2 = client.plantDetect(url, new HashMap<String, String>());
+                    hashMap = (HashMap) res2.toMap();
+                    result = (ArrayList<HashMap>) hashMap.get("result");
+                    i = 0;
+                    for (HashMap value: result) {
+                        if(Double.parseDouble(value.get("score").toString())>i) {
+                            i = Double.parseDouble(value.get("score").toString());
+                            message = value.get("name").toString();
+                            message = MessageUtil.initText(ToUserName, FromUserName, message);
+                        }
+                    }
+                }
 
             }else {
                 message = MessageUtil.initTulLing(ToUserName, FromUserName, Content);
